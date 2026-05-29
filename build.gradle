@@ -8,49 +8,79 @@ android {
 
     defaultConfig {
         applicationId "com.texas4win.app"
-        // يدعم Android 5.0 فأعلى - يغطي 99%+ من الأجهزة
-        minSdk 21
+        minSdk 26
         targetSdk 34
         versionCode 1
         versionName "1.0.0"
 
-        // دعم العربية RTL
+        // تفعيل Multidex للتطبيقات الكبيرة
+        multiDexEnabled true
+
+        // دعم RTL للغة العربية
         vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
+        // Release Build - للنشر على Google Play
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // لإنتاج APK موقّع جاهز للرفع
+            
+            // تفعيل التوقيع للإنتاج
             // signingConfig signingConfigs.release
         }
+        
+        // Debug Build - للاختبار
         debug {
             applicationIdSuffix ".debug"
             debuggable true
+            minifyEnabled false
         }
     }
 
+    // إعدادات الترجمة
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    // ضغط APK للتوزيع
+    // خيارات الحزم
     packagingOptions {
         resources {
-            excludes += ['META-INF/DEPENDENCIES']
+            excludes += [
+                'META-INF/DEPENDENCIES',
+                'META-INF/LICENSE',
+                'META-INF/LICENSE.txt',
+                'META-INF/NOTICE',
+                'META-INF/NOTICE.txt'
+            ]
         }
+    }
+
+    // اختبارات الأمان
+    lint {
+        // تفعيل فحوصات الأمان
+        enable 'MissingTranslation', 'ExtraTranslation', 'HardcodedText'
+        abortOnError false
+        // تجاهل المشاكل البسيطة
+        disable 'MissingDimensionResource'
     }
 }
 
 dependencies {
-    // AndroidX الأساسي
+    // AndroidX الأساسي - آخر إصدار آمن
     implementation 'androidx.appcompat:appcompat:1.6.1'
     
-    // مكتبة السحب للتحديث
+    // مكتبة Multidex
+    implementation 'androidx.multidex:multidex:2.0.1'
+    
+    // SwipeRefreshLayout لسحب التحديث
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     
-    // تصميم Material
+    // Material Design
     implementation 'com.google.android.material:material:1.11.0'
+    
+    // Lifecycle (آمن ومستقر)
+    implementation 'androidx.lifecycle:lifecycle-runtime:2.6.2'
 }

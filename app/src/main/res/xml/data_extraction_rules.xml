@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <!--
+    استخراج البيانات - متطلب Google Play
+    يحدد ما يمكن نسخه احتياطياً واستخراجه
+    -->
+    <domain-config>
+        <!-- لا تشمل WebView cache في الاستخراج -->
+        <domain includeSubdomains="true">example.com</domain>
+        <exclude-domain includeSubdomains="true">example.com</exclude-domain>
+    </domain-config>
+
+    <!-- استخراج البيانات الافتراضي -->
+    <device-transfer>
+        <!-- تعطيل نقل البيانات للحماية -->
+        <exclude-device-transfer>
+            <domain includeSubdomains="true">example.com</domain>
+        </exclude-device-transfer>
+    </device-transfer>
+</data-extraction-rules>
