@@ -24,7 +24,6 @@ jobs:
           mkdir -p app/src/main/res/mipmap-xhdpi
           mkdir -p app/src/main/res/mipmap-xxhdpi
           mkdir -p app/src/main/res/mipmap-xxxhdpi
-          cp MainActivity.java app/src/main/java/com/texas4win/app/
           mv AndroidManifest.xml app/src/main/ 2>/dev/null || true
           mv activity_main.xml app/src/main/res/layout/ 2>/dev/null || true
           mv strings.xml app/src/main/res/values/ 2>/dev/null || true
@@ -37,15 +36,123 @@ jobs:
           cp ic_launcher.xml app/src/main/res/mipmap-xhdpi/ 2>/dev/null || true
           cp ic_launcher.xml app/src/main/res/mipmap-xxhdpi/ 2>/dev/null || true
           cp ic_launcher.xml app/src/main/res/mipmap-xxxhdpi/ 2>/dev/null || true
-          sed -i 's|file:///android_asset/index.html|https://agents.texas4win.com/|g' app/src/main/java/com/texas4win/app/MainActivity.java
+      - name: Write MainActivity.java
+        run: |
+          cat > app/src/main/java/com/texas4win/app/MainActivity.java << 'EOF'
+          package com.texas4win.app;
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.view.Window;
+          import android.view.WindowManager;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import androidx.appcompat.app.AppCompatActivity;
+          import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+          public class MainActivity extends AppCompatActivity {
+              private WebView webView;
+              private SwipeRefreshLayout swipeRefreshLayout;
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                      Window window = getWindow();
+                      window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                      window.setStatusBarColor(0xFF060810);
+                  }
+                  setContentView(R.layout.activity_main);
+                  webView = findViewById(R.id.webView);
+                  swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  settings.setLoadWithOverviewMode(true);
+                  settings.setUseWideViewPort(true);
+                  settings.setBuiltInZoomControls(false);
+                  settings.setDisplayZoomControls(false);
+                  settings.setSupportZoom(false);
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                      settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                  }
+                  settings.setAllowFileAccess(true);
+                  webView.setWebViewClient(new WebViewClient());
+                  webView.setWebChromeClient(new WebChromeClient());
+                  swipeRefreshLayout.setColorSchemeColors(0xFFC9A84C);
+                  swipeRefreshLayout.setProgressBackgroundColorSchemeColor(0xFF0D1120);
+                  swipeRefreshLayout.setOnRefreshListener(() -> {
+                      webView.reload();
+                      swipeRefreshLayout.setRefreshing(false);
+                  });
+                  webView.loadUrl("https://agents.texas4win.com/");
+              }
+              @Override
+              public void onBackPressed() {
+                  if (webView.canGoBack()) webView.goBack();
+                  else super.onBackPressed();
+              }
+              @Override protected void onResume() { super.onResume(); webView.onResume(); }
+              @Override protected void onPause() { super.onPause(); webView.onPause(); }
+              @Override protected void onDestroy() { if (webView != null) webView.destroy(); super.onDestroy(); }
+          }
+          EOF
       - name: Write root build.gradle
-        run: printf 'plugins {\n    id "com.android.application" version "8.2.0" apply false\n}\n' > build.gradle
+        run: |
+          cat > build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application' version '8.2.0' apply false
+          }
+          EOF
       - name: Write app build.gradle
         run: |
-          printf 'plugins {\n    id "com.android.application"\n}\nandroid {\n    namespace "com.texas4win.app"\n    compileSdk 34\n    defaultConfig {\n        applicationId "com.texas4win.app"\n        minSdk 26\n        targetSdk 34\n        versionCode 1\n        versionName "1.0"\n    }\n    buildTypes {\n        debug { debuggable true }\n    }\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_1_8\n        targetCompatibility JavaVersion.VERSION_1_8\n    }\n}\ndependencies {\n    implementation "androidx.appcompat:appcompat:1.6.1"\n    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"\n    implementation "com.google.android.material:material:1.11.0"\n}\n' > app/build.gradle
+          cat > app/build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.texas4win.app'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.texas4win.app"
+                  minSdk 26
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+              buildTypes {
+                  debug { debuggable true }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
+              }
+          }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+              implementation 'com.google.android.material:material:1.11.0'
+          }
+          EOF
       - name: Write settings.gradle
         run: |
-          printf 'pluginManagement {\n    repositories {\n        google()\n        mavenCentral()\n        gradlePluginPortal()\n    }\n}\ndependencyResolutionManagement {\n    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)\n    repositories {\n        google()\n        mavenCentral()\n    }\n}\nrootProject.name = "Texas4Win"\ninclude ":app"\n' > settings.gradle
+          cat > settings.gradle << 'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "Texas4Win"
+          include ':app'
+          EOF
       - name: Setup Gradle
         run: gradle wrapper --gradle-version=8.4 --distribution-type=bin
       - uses: android-actions/setup-android@v3
