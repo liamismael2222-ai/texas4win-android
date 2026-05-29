@@ -1,19 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- ثيم التطبيق الرئيسي - خلفية داكنة تطابق التصميم -->
+    <!-- ثيم Number1 Bot - ذهبي وأسود -->
     <style name="Theme.Texas4Win" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">#060810</item>
-        <item name="android:statusBarColor">#060810</item>
-        <item name="android:navigationBarColor">#060810</item>
+        <!-- الألوان الأساسية -->
+        <item name="android:windowBackground">@color/app_background</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:navigationBarColor">@color/primary_dark</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">false</item>
+        
+        <!-- الألوان الرئيسية -->
+        <item name="colorPrimary">@color/primary_gold</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent_orange</item>
+        
+        <!-- نص بيضاء -->
+        <item name="android:textColorPrimary">@color/white_text</item>
+        <item name="android:textColorSecondary">@color/white_text</item>
     </style>
 
-    <!-- ثيم شاشة البداية (Splash Screen) -->
+    <!-- شاشة البداية -->
     <style name="Theme.Texas4Win.SplashScreen" parent="Theme.Texas4Win">
         <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
     </style>
 
 </resources>

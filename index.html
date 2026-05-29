@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
-<meta name="theme-color" content="#060810"/>
-<title>Number1 Texas — لوحة الوكلاء المتقدمة</title>
+<meta name="theme-color" content="#1a1a1a"/>
+<title>Number1 Bot — لوحة التحكم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Cairo:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap"/>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -12,20 +12,21 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0e1a;font-family:'Cairo',sans-serif;direction:rtl;overflow-x:hidden}
+body{background:#1a1a1a;font-family:'Cairo',sans-serif;direction:rtl;overflow-x:hidden}
 ::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:#0d1120}
-::-webkit-scrollbar-thumb{background:#c9a84c44;border-radius:3px}
+::-webkit-scrollbar-track{background:#2a2a2a}
+::-webkit-scrollbar-thumb{background:#FFD70066;border-radius:3px}
 input,button,textarea,select{font-family:'Cairo',sans-serif}
 @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4)}70%{box-shadow:0 0 0 10px rgba(201,168,76,0)}}
-@keyframes glow{0%,100%{text-shadow:0 0 10px rgba(201,168,76,.5)}50%{text-shadow:0 0 20px rgba(201,168,76,.8)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,0.4)}70%{box-shadow:0 0 0 10px rgba(255,215,0,0)}}
+@keyframes fireGlow{0%,100%{text-shadow:0 0 10px #FF4500,0 0 20px #FF6347}50%{text-shadow:0 0 20px #FF4500,0 0 30px #FF6347}}
+@keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-10px)}}
 .fade-in{animation:fadeIn 0.5s ease forwards}
-.card-hover:hover{transform:translateY(-2px);transition:transform 0.2s}
-.btn-premium{transition:all 0.3s ease}
-.btn-premium:hover{transform:scale(1.05);box-shadow:0 8px 24px rgba(201,168,76,.5)}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;alignItems:center;justifyContent:center;zIndex:1000;backdropFilter:blur(4px)}
+.btn-premium:hover{transform:scale(1.05);box-shadow:0 8px 24px rgba(255,215,0,.5)}
+.bot-icon{animation:float 3s ease-in-out infinite}
+.fire-text{animation:fireGlow 2s ease-in-out infinite}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;alignItems:center;justifyContent:center;zIndex:1000;backdropFilter:blur(8px)}
 </style>
 </head>
 <body>
@@ -34,11 +35,10 @@ input,button,textarea,select{font-family:'Cairo',sans-serif}
 const { useState, useEffect, useRef } = React;
 
 const C = {
-  bg:"#0a0e1a", card:"#0d1120", border:"#1a2240",
-  gold:"#c9a84c", goldL:"#f0cc76", goldD:"#8a6a1e",
-  green:"#00e5a0", red:"#ff4d6d", blue:"#3d6fff",
-  cyan:"#00bfff", purple:"#b024d9", orange:"#ff6b35",
-  text:"#e8eaf0", muted:"#5a6480"
+  bg:"#1a1a1a", card:"#2a2a2a", border:"#3a3a3a",
+  gold:"#FFD700", goldL:"#FFF44F", goldD:"#DAA520",
+  fire:"#FF4500", fireLight:"#FF6347", fireGlow:"#FFB347",
+  white:"#FFFFFF", text:"#e8eaf0", muted:"#888888"
 };
 
 /* ── Particles Background ── */
@@ -50,11 +50,11 @@ function Particles() {
     let raf;
     const resize = () => { cv.width = window.innerWidth; cv.height = window.innerHeight; };
     resize(); window.addEventListener("resize", resize);
-    const pts = Array.from({length:70}, () => ({
+    const pts = Array.from({length:80}, () => ({
       x: Math.random()*cv.width, y: Math.random()*cv.height,
-      r: Math.random()*1.4+0.3,
-      vx: (Math.random()-.5)*.3, vy: (Math.random()-.5)*.3,
-      a: Math.random()*.5+.1
+      r: Math.random()*1.2+0.4,
+      vx: (Math.random()-.5)*.4, vy: (Math.random()-.5)*.4,
+      a: Math.random()*.6+.2
     }));
     const draw = () => {
       ctx.clearRect(0,0,cv.width,cv.height);
@@ -63,155 +63,43 @@ function Particles() {
         if(p.x<0)p.x=cv.width; if(p.x>cv.width)p.x=0;
         if(p.y<0)p.y=cv.height; if(p.y>cv.height)p.y=0;
         ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle=`rgba(201,168,76,${p.a})`; ctx.fill();
+        ctx.fillStyle=`rgba(255,215,0,${p.a})`; ctx.fill();
       });
-      for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
-        const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
-        if(d<110){ ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y);
-          ctx.strokeStyle=`rgba(201,168,76,${.07*(1-d/110)})`; ctx.lineWidth=.5; ctx.stroke(); }
-      }
       raf=requestAnimationFrame(draw);
     };
     draw();
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize",resize); };
   }, []);
-  return <canvas ref={ref} style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none"}}/>;
+  return <canvas ref={ref} style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none"}}/>
 }
 
 /* ── Premium Button ── */
-function PremiumButton({icon, label, color, onClick, onEdit, onDelete, isAdmin}) {
+function PremiumButton({icon, label, color, onClick}) {
   return (
-    <div style={{position:"relative",group:"hover"}}>
-      <button 
-        onClick={onClick}
-        className="btn-premium"
-        style={{
-          display:"flex",
-          flexDirection:"column",
-          alignItems:"center",
-          justifyContent:"center",
-          gap:8,
-          padding:"18px 16px",
-          borderRadius:16,
-          border:"none",
-          background:`linear-gradient(135deg,${color}dd,${color}aa)`,
-          color:"#fff",
-          fontWeight:700,
-          fontSize:12,
-          cursor:"pointer",
-          minWidth:100,
-          boxShadow:`0 4px 15px ${color}44`,
-          transition:"all 0.3s ease"
-        }}>
-        <span style={{fontSize:24}}>{icon}</span>
-        <span>{label}</span>
-      </button>
-      {isAdmin && (
-        <div style={{position:"absolute",top:-8,left:-8,display:"flex",gap:4,opacity:0,transition:"opacity 0.2s",_groupHover:{opacity:1}}}>
-          <button onClick={onEdit} style={{width:24,height:24,borderRadius:"50%",background:C.blue,border:"none",color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>✎</button>
-          <button onClick={onDelete} style={{width:24,height:24,borderRadius:"50%",background:C.red,border:"none",color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700}}>✕</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Button Manager Modal ── */
-function ButtonManager({onClose, buttons, setButtons}) {
-  const [editIdx, setEditIdx] = useState(null);
-  const [form, setForm] = useState({label:"", icon:"", color:C.gold, url:""});
-
-  const save = () => {
-    if(!form.label || !form.icon) return;
-    if(editIdx !== null) {
-      const newButtons = [...buttons];
-      newButtons[editIdx] = form;
-      setButtons(newButtons);
-      setEditIdx(null);
-    } else {
-      setButtons([...buttons, form]);
-    }
-    setForm({label:"", icon:"", color:C.gold, url:""});
-  };
-
-  const edit = (idx) => {
-    setEditIdx(idx);
-    setForm(buttons[idx]);
-  };
-
-  const del = (idx) => {
-    setButtons(buttons.filter((_, i) => i !== idx));
-  };
-
-  return (
-    <div className="modal-overlay">
-      <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:28,maxWidth:500,width:"90%",maxHeight:"80vh",overflow:"auto"}}>
-        <h2 style={{color:C.goldL,marginBottom:20,fontSize:18}}>إدارة الأزرار</h2>
-        
-        <div style={{marginBottom:16}}>
-          <label style={{color:C.muted,fontSize:12}}>اسم الزر</label>
-          <input 
-            value={form.label}
-            onChange={e=>setForm({...form,label:e.target.value})}
-            placeholder="مثال: الدعم"
-            style={{width:"100%",padding:10,marginTop:4,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,color:C.text,fontSize:13}}
-          />
-        </div>
-
-        <div style={{marginBottom:16}}>
-          <label style={{color:C.muted,fontSize:12}}>الرمز (emoji)</label>
-          <input 
-            value={form.icon}
-            onChange={e=>setForm({...form,icon:e.target.value})}
-            placeholder="مثال: 💬"
-            style={{width:"100%",padding:10,marginTop:4,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,color:C.text,fontSize:13}}
-          />
-        </div>
-
-        <div style={{marginBottom:16}}>
-          <label style={{color:C.muted,fontSize:12}}>الرابط</label>
-          <input 
-            value={form.url}
-            onChange={e=>setForm({...form,url:e.target.value})}
-            placeholder="https://..."
-            style={{width:"100%",padding:10,marginTop:4,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,color:C.text,fontSize:13}}
-          />
-        </div>
-
-        <div style={{marginBottom:20}}>
-          <label style={{color:C.muted,fontSize:12}}>اللون</label>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginTop:8}}>
-            {[C.gold,C.blue,C.green,C.purple,C.cyan,C.orange,C.red,C.goldD].map(col=>(
-              <button 
-                key={col}
-                onClick={()=>setForm({...form,color:col})}
-                style={{width:"100%",height:40,background:col,border:form.color===col?`3px solid ${C.text}`:"none",borderRadius:8,cursor:"pointer"}}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div style={{display:"flex",gap:10}}>
-          <button onClick={save} style={{flex:1,padding:10,background:`linear-gradient(135deg,${C.green},#009960)`,border:"none",borderRadius:8,color:"#fff",fontWeight:700,cursor:"pointer"}}>
-            {editIdx !== null ? "تحديث" : "إضافة"}
-          </button>
-          <button onClick={onClose} style={{flex:1,padding:10,background:C.border,border:"none",borderRadius:8,color:C.text,fontWeight:700,cursor:"pointer"}}>إغلاق</button>
-        </div>
-
-        <div style={{marginTop:20,borderTop:`1px solid ${C.border}`,paddingTop:16}}>
-          <h3 style={{color:C.goldL,marginBottom:12,fontSize:14}}>الأزرار الحالية</h3>
-          {buttons.map((btn,idx)=>(
-            <div key={idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:10,background:C.bg,borderRadius:8,marginBottom:8}}>
-              <span style={{color:C.text}}>{btn.icon} {btn.label}</span>
-              <div style={{display:"flex",gap:4}}>
-                <button onClick={()=>edit(idx)} style={{padding:"4px 8px",background:C.blue,border:"none",borderRadius:4,color:"#fff",cursor:"pointer",fontSize:11}}>✎</button>
-                <button onClick={()=>del(idx)} style={{padding:"4px 8px",background:C.red,border:"none",borderRadius:4,color:"#fff",cursor:"pointer",fontSize:11}}>✕</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <button 
+      onClick={onClick}
+      className="btn-premium"
+      style={{
+        display:"flex",
+        flexDirection:"column",
+        alignItems:"center",
+        justifyContent:"center",
+        gap:8,
+        padding:"18px 16px",
+        borderRadius:16,
+        border:`2px solid ${color}`,
+        background:`linear-gradient(135deg,${color}22,${color}11)`,
+        color:color,
+        fontWeight:700,
+        fontSize:12,
+        cursor:"pointer",
+        minWidth:100,
+        boxShadow:`0 4px 15px ${color}44`,
+        transition:"all 0.3s ease"
+      }}>
+      <span style={{fontSize:24}}>{icon}</span>
+      <span>{label}</span>
+    </button>
   );
 }
 
@@ -219,22 +107,22 @@ function ButtonManager({onClose, buttons, setButtons}) {
 function Login({onLogin}){
   const [u,setU]=useState(""), [p,setP]=useState(""), [loading,setL]=useState(false), [err,setE]=useState("");
   const go = () => {
-    if(!u||!p){setE("يرجى إدخال اسم المستخدم وكلمة المرور");return;}
+    if(!u||!p){setE("يرجى إدخال بيانات الدخول");return;}
     setL(true); setE("");
-    setTimeout(()=>{ setL(false); onLogin({name:u,role:"وكيل ذهبي",id:"AG-00742",isAdmin:u==="admin"}); },1400);
+    setTimeout(()=>{ setL(false); onLogin({name:u,role:"مشغل البوت",id:"BOT-00001",isAdmin:u==="admin"}); },1400);
   };
   return (
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg,position:"relative"}}>
       <Particles/>
       <div className="fade-in" style={{position:"relative",zIndex:1,width:"100%",maxWidth:450,margin:"0 16px",
-        background:"linear-gradient(160deg,#0d1120,#111828)",border:`1px solid ${C.gold}33`,borderRadius:24,
-        padding:"50px 42px",boxShadow:`0 0 80px rgba(201,168,76,.12),0 40px 100px rgba(0,0,0,.8)`}}>
+        background:`linear-gradient(160deg,#2a2a2a,#1f1f1f)`,border:`2px solid ${C.gold}44`,borderRadius:24,
+        padding:"50px 42px",boxShadow:`0 0 80px rgba(255,215,0,.2),0 40px 100px rgba(0,0,0,.8)`}}>
         <div style={{textAlign:"center",marginBottom:40}}>
-          <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:80,height:80,
-            borderRadius:20,background:`linear-gradient(135deg,${C.gold},${C.goldD})`,fontSize:36,marginBottom:20,
-            boxShadow:`0 12px 40px rgba(201,168,76,.5)`,animation:"pulse 2s infinite"}}>♠</div>
-          <div style={{fontSize:28,fontWeight:900,color:C.goldL,fontFamily:"'Playfair Display',serif",letterSpacing:2}}>Number1 Texas</div>
-          <div style={{color:C.muted,fontSize:13,marginTop:6}}>لوحة الوكلاء المتقدمة</div>
+          <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:90,height:90,
+            borderRadius:20,background:`linear-gradient(135deg,${C.gold},${C.goldD})`,fontSize:50,marginBottom:20,
+            boxShadow:`0 12px 40px rgba(255,215,0,.6)`,animation:"pulse 2s infinite",className:"bot-icon"}}>🤖</div>
+          <div className="fire-text" style={{fontSize:32,fontWeight:900,color:C.fireLight,fontFamily:"'Playfair Display',serif",letterSpacing:2}}>NUMBER1 BOT</div>
+          <div style={{color:C.muted,fontSize:13,marginTop:8}}>لوحة التحكم المتقدمة</div>
         </div>
         {[{l:"اسم المستخدم",v:u,s:setU,t:"text",ph:"أدخل اسم المستخدم"},
           {l:"كلمة المرور",v:p,s:setP,t:"password",ph:"••••••••"}].map(({l,v,s,t,ph})=>(
@@ -242,23 +130,20 @@ function Login({onLogin}){
             <label style={{display:"block",fontSize:13,color:C.muted,marginBottom:9,fontWeight:700}}>{l}</label>
             <input type={t} value={v} placeholder={ph}
               onChange={e=>s(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}
-              style={{width:"100%",padding:"14px 18px",background:"#060810",border:`1px solid ${C.border}`,
+              style={{width:"100%",padding:"14px 18px",background:"#1a1a1a",border:`2px solid ${C.border}`,
                 borderRadius:12,color:C.text,fontSize:15,outline:"none",boxSizing:"border-box",
                 fontFamily:"'Cairo',sans-serif",transition:"all 0.3s"}}
-              onFocus={e=>{e.target.style.borderColor=C.gold; e.target.style.boxShadow=`0 0 20px ${C.gold}33`}}
+              onFocus={e=>{e.target.style.borderColor=C.gold; e.target.style.boxShadow=`0 0 20px ${C.gold}44`}}
               onBlur={e=>{e.target.style.borderColor=C.border; e.target.style.boxShadow="none"}}/>
           </div>
         ))}
-        {err&&<div style={{color:C.red,fontSize:13,marginBottom:14,textAlign:"center",fontWeight:600}}>{err}</div>}
+        {err&&<div style={{color:C.fireLight,fontSize:13,marginBottom:14,textAlign:"center",fontWeight:600}}>{err}</div>}
         <button onClick={go} disabled={loading} style={{width:"100%",padding:15,marginTop:10,
-          background:loading?"#333":`linear-gradient(135deg,${C.gold},${C.goldD})`,border:"none",borderRadius:12,
-          color:"#000",fontWeight:900,fontSize:16,cursor:loading?"not-allowed":"pointer",
-          boxShadow:loading?"none":`0 10px 30px rgba(201,168,76,.4)`,transition:"all .3s"}}>
+          background:loading?"#333":`linear-gradient(135deg,${C.fire},${C.fireLight})`,border:"none",borderRadius:12,
+          color:"#fff",fontWeight:900,fontSize:16,cursor:loading?"not-allowed":"pointer",
+          boxShadow:loading?"none":`0 10px 30px rgba(255,69,0,.5)`,transition:"all .3s"}}>
           {loading?"جاري الدخول...":"دخول الآن"}
         </button>
-        <div style={{textAlign:"center",marginTop:24,color:C.muted,fontSize:12}}>
-          <span style={{color:C.gold,cursor:"pointer"}}>نسيت كلمة المرور؟</span> • <span style={{color:C.gold,cursor:"pointer"}}>إنشاء حساب</span>
-        </div>
       </div>
     </div>
   );
@@ -266,134 +151,91 @@ function Login({onLogin}){
 
 /* ── Main Dashboard ── */
 function Dashboard({user,onLogout}){
-  const [tab,setTab]=useState("buttons");
-  const [showButtonManager,setShowButtonManager]=useState(false);
-  
   const defaultButtons = [
-    {label:"الدعم",icon:"💬",color:C.blue,url:"https://t.me/number1texaschannel"},
-    {label:"البوت",icon:"🤖",color:C.purple,url:"https://t.me/Number1Texas_Bot"},
-    {label:"التيليجرام",icon:"✈️",color:C.cyan,url:"https://t.me/number1texaschannel"},
+    {label:"الدعم",icon:"💬",color:C.gold,url:"https://t.me/number1texaschannel"},
+    {label:"البوت",icon:"🤖",color:C.fireLight,url:"https://t.me/Number1Texas_Bot"},
+    {label:"التيليجرام",icon:"✈️",color:C.fireGlow,url:"https://t.me/number1texaschannel"},
     {label:"الفيسبوك",icon:"👍",color:"#1877f2",url:"https://www.facebook.com/share/p/1bCAbK1DxL/"},
-    {label:"الكاشير",icon:"💰",color:C.orange,url:"https://m.texas4win.com/cashier"},
-    {label:"الموقع الرسمي",icon:"🌐",color:C.green,url:"https://m.texas4win.com/"},
+    {label:"الكاشير",icon:"💰",color:C.gold,url:"https://m.texas4win.com/cashier"},
+    {label:"الموقع الرسمي",icon:"🌐",color:C.fireGlow,url:"https://m.texas4win.com/"},
   ];
-
-  const [buttons,setButtons]=useState(defaultButtons);
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column"}}>
       {/* NAV */}
-      <nav style={{background:"rgba(13,17,32,.95)",borderBottom:`1px solid ${C.border}`,padding:"0 24px",
+      <nav style={{background:"rgba(42,42,42,.95)",borderBottom:`2px solid ${C.gold}44`,padding:"0 24px",
         display:"flex",alignItems:"center",justifyContent:"space-between",height:70,
-        backdropFilter:"blur(20px)",position:"sticky",top:0,zIndex:100,boxShadow:"0 4px 20px rgba(0,0,0,.5)"}}>
+        backdropFilter:"blur(20px)",position:"sticky",top:0,zIndex:100,boxShadow:"0 4px 30px rgba(255,69,0,.2)"}}>
         <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <div style={{width:44,height:44,borderRadius:12,background:`linear-gradient(135deg,${C.gold},${C.goldD})`,
-            display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,boxShadow:`0 8px 20px rgba(201,168,76,.4)`}}>♠</div>
+          <div className="bot-icon" style={{width:50,height:50,borderRadius:14,background:`linear-gradient(135deg,${C.gold},${C.goldD})`,
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,boxShadow:`0 8px 25px rgba(255,215,0,.5)`,fontWeight:"900"}}>🤖</div>
           <div>
-            <div style={{fontFamily:"'Playfair Display',serif",color:C.goldL,fontSize:18,fontWeight:900,letterSpacing:1}}>Number1 Texas</div>
-            <div style={{color:C.muted,fontSize:10}}>لوحة الإدارة المتقدمة</div>
+            <div className="fire-text" style={{fontFamily:"'Playfair Display',serif",color:C.fireLight,fontSize:18,fontWeight:900,letterSpacing:1}}>NUMBER1 BOT</div>
+            <div style={{color:C.muted,fontSize:10}}>لوحة التحكم المتقدمة</div>
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
-          {user.isAdmin && (
-            <button onClick={()=>setShowButtonManager(true)} style={{padding:"8px 16px",
-              background:`linear-gradient(135deg,${C.purple},${C.blue})`,border:"none",borderRadius:10,
-              color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",transition:"all 0.3s"}}>
-              ⚙️ إدارة الأزرار
-            </button>
-          )}
           <div style={{display:"flex",alignItems:"center",gap:10,background:C.card,
-            border:`1px solid ${C.border}`,borderRadius:12,padding:"8px 14px"}}>
+            border:`2px solid ${C.gold}44`,borderRadius:12,padding:"8px 14px"}}>
             <div style={{width:36,height:36,borderRadius:"50%",
-              background:`linear-gradient(135deg,${C.gold},${C.goldD})`,
-              display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:"#000",fontWeight:900}}>
+              background:`linear-gradient(135deg,${C.fire},${C.fireLight})`,
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:"#fff",fontWeight:900}}>
               {user.name[0]?.toUpperCase()}
             </div>
             <div style={{fontSize:12}}>
               <div style={{color:C.text,fontWeight:700}}>{user.name}</div>
-              <div style={{color:C.muted,fontSize:10}}>{user.isAdmin?"مسؤول":"وكيل"}</div>
+              <div style={{color:C.gold,fontSize:10}}>{user.isAdmin?"مسؤول":"مشغل"}</div>
             </div>
           </div>
-          <button onClick={onLogout} style={{padding:"8px 14px",background:C.red,border:"none",borderRadius:10,
+          <button onClick={onLogout} style={{padding:"8px 14px",background:C.fire,border:"none",borderRadius:10,
             color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer"}}>تسجيل خروج</button>
         </div>
       </nav>
 
       {/* CONTENT */}
       <div style={{flex:1,padding:28}}>
-        {tab === "buttons" && (
-          <div className="fade-in">
-            <h1 style={{color:C.goldL,marginBottom:10,fontSize:24,fontWeight:900}}>الأزرار السريعة</h1>
-            <p style={{color:C.muted,marginBottom:28}}>الوصول المباشر للخدمات والمنصات</p>
-            
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:20}}>
-              {buttons.map((btn,idx)=>(
-                <PremiumButton 
-                  key={idx}
-                  icon={btn.icon}
-                  label={btn.label}
-                  color={btn.color}
-                  onClick={()=>window.open(btn.url,"_blank")}
-                  isAdmin={user.isAdmin}
-                  onEdit={()=>{}}
-                  onDelete={()=>{}}
-                />
-              ))}
-            </div>
+        <div className="fade-in">
+          <h1 style={{color:C.fireLight,marginBottom:10,fontSize:28,fontWeight:900,textAlign:"center"}}>مرحباً بك في لوحة التحكم</h1>
+          <p style={{color:C.muted,marginBottom:32,textAlign:"center",fontSize:14}}>الوصول المباشر لجميع الخدمات والأدوات</p>
+          
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:20,maxWidth:1000,margin:"0 auto"}}>
+            {defaultButtons.map((btn,idx)=>(
+              <PremiumButton 
+                key={idx}
+                icon={btn.icon}
+                label={btn.label}
+                color={btn.color}
+                onClick={()=>window.open(btn.url,"_blank")}
+              />
+            ))}
           </div>
-        )}
 
-        {tab === "stats" && (
-          <div className="fade-in">
-            <h1 style={{color:C.goldL,marginBottom:28,fontSize:24,fontWeight:900}}>إحصا��يات سريعة</h1>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:20}}>
-              {[
-                {l:"إجمالي الرصيد",v:"45,250 ر.س",icon:"💰",t:"up"},
-                {l:"العمولات اليومية",v:"2,150 ر.س",icon:"📈",t:"up"},
-                {l:"اللاعبون النشطون",v:"12",icon:"♟",t:"stable"},
-                {l:"معدل التحويل",v:"8.5%",icon:"📊",t:"down"}
-              ].map((s,i)=>(
-                <div key={i} style={{background:`linear-gradient(135deg,#0d1120,#111828)`,border:`1px solid ${C.border}33`,
-                  borderRadius:16,padding:"24px 26px",position:"relative",overflow:"hidden",
-                  boxShadow:"0 4px 30px rgba(0,0,0,.4)"}}>
-                  <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",
-                    background:`${C.gold}18`,filter:"blur(20px)"}}/>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-                    <span style={{color:C.muted,fontSize:11,fontFamily:"'Space Mono',monospace",letterSpacing:2,textTransform:"uppercase"}}>{s.l}</span>
-                    <span style={{fontSize:24}}>{s.icon}</span>
-                  </div>
-                  <div style={{fontSize:28,fontWeight:900,color:C.text,fontFamily:"'Playfair Display',serif"}}>{s.v}</div>
-                  <div style={{marginTop:8,fontSize:11,color:s.t==="up"?C.green:s.t==="down"?C.red:C.muted}}>
-                    {s.t==="up"?"📈 ↑5.2%":s.t==="down"?"📉 ↓2.1%":"→ مستقر"}
-                  </div>
-                </div>
-              ))}
+          {/* Info Section */}
+          <div style={{marginTop:40,padding:24,background:C.card,border:`2px solid ${C.gold}33`,borderRadius:16}}>
+            <h2 style={{color:C.fireLight,marginBottom:16,fontSize:18,fontWeight:700}}>ℹ️ معلومات التطبيق</h2>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16}}>
+              <div style={{background:"#1a1a1a",padding:14,borderRadius:10,borderLeft:`3px solid ${C.gold}`}}>
+                <div style={{color:C.muted,fontSize:11}}>اسم التطبيق</div>
+                <div style={{color:C.fireLight,fontSize:14,fontWeight:700,marginTop:4}}>NUMBER1 BOT</div>
+              </div>
+              <div style={{background:"#1a1a1a",padding:14,borderRadius:10,borderLeft:`3px solid ${C.fire}`}}>
+                <div style={{color:C.muted,fontSize:11}}>معرف المستخدم</div>
+                <div style={{color:C.text,fontSize:14,fontWeight:700,marginTop:4}}>{user.id}</div>
+              </div>
+              <div style={{background:"#1a1a1a",padding:14,borderRadius:10,borderLeft:`3px solid ${C.gold}`}}>
+                <div style={{color:C.muted,fontSize:11}}>النسخة</div>
+                <div style={{color:C.text,fontSize:14,fontWeight:700,marginTop:4}}>v1.0.0</div>
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Button Manager Modal */}
-      {showButtonManager && user.isAdmin && (
-        <ButtonManager 
-          onClose={()=>setShowButtonManager(false)}
-          buttons={buttons}
-          setButtons={setButtons}
-        />
-      )}
-
-      {/* TAB SWITCHER */}
-      <div style={{background:"rgba(13,17,32,.95)",borderTop:`1px solid ${C.border}`,padding:"16px 24px",
-        display:"flex",gap:12,justifyContent:"center",position:"sticky",bottom:0}}>
-        {[{id:"buttons",label:"الأزرار السريعة"},{id:"stats",label:"الإحصائيات"}].map(t=>(
-          <button key={t.id}
-            onClick={()=>setTab(t.id)}
-            style={{padding:"10px 20px",borderRadius:10,border:"none",
-              background:tab===t.id?`linear-gradient(135deg,${C.gold},${C.goldD})`:C.card,
-              color:tab===t.id?"#000":C.text,fontWeight:700,cursor:"pointer",transition:"all 0.3s",
-              boxShadow:tab===t.id?`0 8px 20px rgba(201,168,76,.3)`:"none"}}
-          >{t.label}</button>
-        ))}
+      {/* FOOTER */}
+      <div style={{background:C.card,borderTop:`2px solid ${C.gold}44`,padding:"16px 24px",
+        display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{color:C.muted,fontSize:11}}>© 2026 Number1 Bot • جميع الحقوق محفوظة</div>
+        <div style={{color:C.muted,fontSize:11}}>🔐 آمن ومحمي</div>
       </div>
     </div>
   );
