@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ثيم التطبيق الرئيسي - خلفية داكنة تطابق التصميم -->
+    <style name="Theme.Texas4Win" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">#060810</item>
+        <item name="android:statusBarColor">#060810</item>
+        <item name="android:navigationBarColor">#060810</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+    </style>
+
+    <!-- ثيم شاشة البداية (Splash Screen) -->
+    <style name="Theme.Texas4Win.SplashScreen" parent="Theme.Texas4Win">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
+
+</resources>

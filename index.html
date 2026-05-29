@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
+<meta name="theme-color" content="#060810"/>
+<title>Texas4Win — لوحة الوكلاء</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Cairo:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060810;font-family:'Cairo',sans-serif;direction:rtl;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0d1120}
+::-webkit-scrollbar-thumb{background:#c9a84c44;border-radius:3px}
+input,button{font-family:'Cairo',sans-serif}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4)}70%{box-shadow:0 0 0 10px rgba(201,168,76,0)}}
+.fade-in{animation:fadeIn 0.5s ease forwards}
+.card-hover:hover{transform:translateY(-2px);transition:transform 0.2s}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const C = {
+  bg:"#060810", card:"#0d1120", border:"#1a2240",
+  gold:"#c9a84c", goldL:"#f0cc76", goldD:"#8a6a1e",
+  green:"#00e5a0", red:"#ff4d6d", blue:"#3d6fff",
+  text:"#e8eaf0", muted:"#5a6480"
+};
+
+/* ── Particles ── */
+function Particles() {
+  const ref = useRef();
+  useEffect(() => {
+    const cv = ref.current, ctx = cv.getContext("2d");
+    let raf;
+    const resize = () => { cv.width = window.innerWidth; cv.height = window.innerHeight; };
+    resize(); window.addEventListener("resize", resize);
+    const pts = Array.from({length:70}, () => ({
+      x: Math.random()*cv.width, y: Math.random()*cv.height,
+      r: Math.random()*1.4+0.3,
+      vx: (Math.random()-.5)*.3, vy: (Math.random()-.5)*.3,
+      a: Math.random()*.5+.1
+    }));
+    const draw = () => {
+      ctx.clearRect(0,0,cv.width,cv.height);
+      pts.forEach(p => {
+        p.x+=p.vx; p.y+=p.vy;
+        if(p.x<0)p.x=cv.width; if(p.x>cv.width)p.x=0;
+        if(p.y<0)p.y=cv.height; if(p.y>cv.height)p.y=0;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(201,168,76,${p.a})`; ctx.fill();
+      });
+      for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+        const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<110){ ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y);
+          ctx.strokeStyle=`rgba(201,168,76,${.07*(1-d/110)})`; ctx.lineWidth=.5; ctx.stroke(); }
+      }
+      raf=requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize",resize); };
+  }, []);
+  return <canvas ref={ref} style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none"}}/>;
+}
+
+/* ── Stat Card ── */
+function Stat({label,val,sub,icon,accent,trend}){
+  return (
+    <div style={{background:"linear-gradient(135deg,#0d1120,#111828)",border:`1px solid ${(accent||C.border)}22`,
+      borderRadius:16,padding:"22px 24px",position:"relative",overflow:"hidden",
+      boxShadow:"0 4px 30px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04)"}}>
+      <div style={{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",
+        background:`${accent||C.gold}18`,filter:"blur(20px)"}}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+        <span style={{color:C.muted,fontSize:11,fontFamily:"'Space Mono',monospace",letterSpacing:2,textTransform:"uppercase"}}>{label}</span>
+        <span style={{fontSize:22}}>{icon}</span>
+      </div>
+      <div style={{fontSize:26,fontWeight:700,color:C.text,fontFamily:"'Playfair Display',serif",letterSpacing:-1}}>{val}</div>
+      {sub&&<div style={{marginTop:8,fontSize:12,color:trend==="up"?C.green:trend==="down"?C.red:C.muted}}>{sub}</div>}
+    </div>
+  );
+}
+
+/* ── Bar Chart ── */
+function Chart({data,color}){
+  const mx=Math.max(...data);
+  return (
+    <div style={{display:"flex",alignItems:"flex-end",gap:4,height:60}}>
+      {data.map((v,i)=>(
+        <div key={i} style={{flex:1,height:`${(v/mx)*100}%`,
+          background:`linear-gradient(to top,${color}bb,${color}22)`,
+          borderRadius:"3px 3px 0 0",minHeight:4}}/>
+      ))}
+    </div>
+  );
+}
+
+/* ── Login ── */
+function Login({onLogin}){
+  const [u,setU]=useState(""), [p,setP]=useState(""), [loading,setL]=useState(false), [err,setE]=useState("");
+  const go = () => {
+    if(!u||!p){setE("يرجى إدخال اسم المستخدم وكلمة المرور");return;}
+    setL(true); setE("");
+    setTimeout(()=>{ setL(false); onLogin({name:u,role:"وكيل ذهبي",id:"AG-00742"}); },1400);
+  };
+  return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg,position:"relative"}}>
+      <Particles/>
+      <div className="fade-in" style={{position:"relative",zIndex:1,width:"100%",maxWidth:420,margin:"0 16px",
+        background:"linear-gradient(160deg,#0d1120,#111828)",border:`1px solid ${C.gold}33`,borderRadius:24,
+        padding:"48px 40px",boxShadow:`0 0 60px rgba(201,168,76,.08),0 30px 80px rgba(0,0,0,.6)`}}>
+        <div style={{textAlign:"center",marginBottom:36}}>
+          <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:72,height:72,
+            borderRadius:20,background:`linear-gradient(135deg,${C.gold},${C.goldD})`,fontSize:32,marginBottom:16,
+            boxShadow:`0 8px 32px rgba(201,168,76,.4)`,animation:"pulse 2s infinite"}}>♠</div>
+          <div style={{fontSize:26,fontWeight:800,color:C.goldL,fontFamily:"'Playfair Display',serif"}}>Texas4Win</div>
+          <div style={{color:C.muted,fontSize:13,marginTop:4}}>منصة إدارة الوكلاء</div>
+        </div>
+        {[{l:"اسم المستخدم",v:u,s:setU,t:"text",ph:"أدخل اسم المستخدم"},
+          {l:"كلمة المرور",v:p,s:setP,t:"password",ph:"••••••••"}].map(({l,v,s,t,ph})=>(
+          <div key={l} style={{marginBottom:18}}>
+            <label style={{display:"block",fontSize:13,color:C.muted,marginBottom:8,fontWeight:600}}>{l}</label>
+            <input type={t} value={v} placeholder={ph}
+              onChange={e=>s(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}
+              style={{width:"100%",padding:"13px 16px",background:"#060810",border:`1px solid ${C.border}`,
+                borderRadius:12,color:C.text,fontSize:15,outline:"none",boxSizing:"border-box",
+                fontFamily:"'Cairo',sans-serif"}}
+              onFocus={e=>e.target.style.borderColor=C.gold}
+              onBlur={e=>e.target.style.borderColor=C.border}/>
+          </div>
+        ))}
+        {err&&<div style={{color:C.red,fontSize:13,marginBottom:12,textAlign:"center"}}>{err}</div>}
+        <button onClick={go} disabled={loading} style={{width:"100%",padding:14,marginTop:8,
+          background:loading?"#333":`linear-gradient(135deg,${C.gold},${C.goldD})`,border:"none",borderRadius:12,
+          color:"#000",fontWeight:800,fontSize:16,cursor:loading?"not-allowed":"pointer",
+          boxShadow:loading?"none":`0 8px 24px rgba(201,168,76,.35)`,transition:"all .3s"}}>
+          {loading?"جاري الدخول...":"دخول إلى لوحة التحكم"}
+        </button>
+        <div style={{textAlign:"center",marginTop:20,color:C.muted,fontSize:12}}>
+          هل نسيت كلمة المرور؟ <span style={{color:C.gold,cursor:"pointer"}}>استعادة الحساب</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Dashboard ── */
+function Dashboard({user,onLogout,installPrompt,onInstall}){
+  const [tab,setTab]=useState("overview"), [copied,setCopied]=useState(false);
+  const ref=`https://texas4win.com/ref/${user.id}`;
+  const copy=()=>{ try{navigator.clipboard.writeText(ref)}catch(e){}; setCopied(true); setTimeout(()=>setCopied(false),2000); };
+
+  const tabs=[{id:"overview",label:"نظرة عامة",icon:"◈"},{id:"players",label:"اللاعبون",icon:"♟"},
+    {id:"commissions",label:"العمولات",icon:"◆"},{id:"reports",label:"التقارير",icon:"▦"}];
+
+  const players=[
+    {name:"Ahmed M.",id:"PL-1021",status:"نشط",dep:"12,500 ر.س",com:"625 ر.س",date:"2026/05/28"},
+    {name:"Sara K.",id:"PL-1022",status:"نشط",dep:"8,200 ر.س",com:"410 ر.س",date:"2026/05/27"},
+    {name:"Omar H.",id:"PL-1023",status:"متوقف",dep:"3,400 ر.س",com:"170 ر.س",date:"2026/05/24"},
+    {name:"Lina F.",id:"PL-1024",status:"نشط",dep:"21,000 ر.س",com:"1,050 ر.س",date:"2026/05/22"},
+    {name:"Khalid R.",id:"PL-1025",status:"جديد",dep:"5,600 ر.س",com:"280 ر.س",date:"2026/05/29"},
+  ];
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column"}}>
+      {/* NAV */}
+      <nav style={{background:"rgba(13,17,32,.92)",borderBottom:`1px solid ${C.border}`,padding:"0 24px",
+        display:"flex",alignItems:"center",justifyContent:"space-between",height:64,
+        backdropFilter:"blur(20px)",position:"sticky",top:0,zIndex:100}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${C.gold},${C.goldD})`,
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>♠</div>
+          <div>
+            <div style={{fontFamily:"'Playfair Display',serif",color:C.goldL,fontSize:16,fontWeight:700}}>Texas4Win</div>
+            <div style={{color:C.muted,fontSize:10}}>لوحة الوكلاء</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          {installPrompt&&(
+            <button onClick={onInstall} style={{padding:"8px 16px",
+              background:`linear-gradient(135deg,${C.green},#009960)`,border:"none",borderRadius:8,
+              color:"#000",fontWeight:700,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+              ⬇ تثبيت التطبيق
+            </button>
+          )}
+          <div style={{display:"flex",alignItems:"center",gap:10,background:C.card,
+            border:`1px solid ${C.border}`,borderRadius:10,padding:"6px 14px"}}>
+            <div style={{width:32,height:32,borderRadius:"50%",
+              background:`linear-gradient(135deg,${C.gold},${C.goldD})`,
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:"#000",fontWeight:800}}>
+              {user.name[0]?.toUpperCase()}
+            </div>
+            <div>
+              <div style={{color:C.text,fontSize:13,fontWeight:700}}>{user.name}</div>
+              <div style={{color:C.gold,fontSize:10}}>{user.role}</div>
+            </div>
+            <button onClick={onLogout} title="خروج"
+              style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:18,padding:"0 4px"}}>⏻</button>
+          </div>
+        </div>
+      </nav>
+
+      {/* TABS */}
+      <div style={{display:"flex",gap:4,padding:"12px 24px",background:C.card,borderBottom:`1px solid ${C.border}`}}>
+        {tabs.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"9px 20px",borderRadius:10,border:"none",
+            background:tab===t.id?`${C.gold}18`:"transparent",
+            color:tab===t.id?C.goldL:C.muted,
+            borderBottom:tab===t.id?`2px solid ${C.gold}`:"2px solid transparent",
+            fontFamily:"'Cairo',sans-serif",fontWeight:700,fontSize:14,cursor:"pointer",
+            display:"flex",alignItems:"center",gap:8,transition:"all .2s"}}>
+            <span>{t.icon}</span>{t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* CONTENT */}
+      <div style={{flex:1,padding:24,overflowY:"auto"}}>
+
+        {/* OVERVIEW */}
+        {tab==="overview"&&(
+          <div className="fade-in">
+            {/* Ref Link */}
+            <div style={{background:`linear-gradient(135deg,${C.gold}18,${C.goldD}08)`,
+              border:`1px solid ${C.gold}44`,borderRadius:16,padding:"20px 24px",marginBottom:24,
+              display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+              <div>
+                <div style={{color:C.gold,fontSize:12,fontWeight:700,letterSpacing:2,marginBottom:6}}>🔗 رابط الإحالة الخاص بك</div>
+                <div style={{color:C.text,fontFamily:"'Space Mono',monospace",fontSize:13}}>{ref}</div>
+              </div>
+              <button onClick={copy} style={{padding:"10px 24px",
+                background:copied?C.green:`linear-gradient(135deg,${C.gold},${C.goldD})`,
+                border:"none",borderRadius:10,color:"#000",fontWeight:800,fontSize:13,cursor:"pointer",transition:"all .3s"}}>
+                {copied?"✓ تم النسخ!":"نسخ الرابط"}
+              </button>
+            </div>
+            {/* Stats */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:16,marginBottom:24}}>
+              <Stat label="إجمالي الأرباح" val="٤٣,٨٢٠ ر.س" sub="↑ 18.4% عن الشهر الماضي" icon="💰" accent={C.gold} trend="up"/>
+              <Stat label="اللاعبون النشطون" val="٢٤٧" sub="↑ 12 لاعب جديد هذا الأسبوع" icon="♟" accent={C.green} trend="up"/>
+              <Stat label="إجمالي الإيداعات" val="٨٧٦,٤٠٠ ر.س" sub="↑ 24.1% نمو" icon="📊" accent={C.blue} trend="up"/>
+              <Stat label="معدل التحويل" val="٣٨.٦٪" sub="↓ 2.1% عن الأسبوع الماضي" icon="🎯" accent={C.red} trend="down"/>
+            </div>
+            {/* Charts */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:24}}>
+              {[{title:"الأرباح الأسبوعية",sub:"آخر 7 أيام",data:[42,58,35,71,62,88,95],color:C.gold,
+                  labels:["أح","إث","ث","أر","خ","ج","س"]},
+                {title:"الإيداعات الشهرية",sub:"2026",data:[320,410,380,520,460,610,580,700,650,820,760,930],color:C.blue,
+                  labels:["1","2","3","4","5","6","7","8","9","10","11","12"]}
+              ].map(ch=>(
+                <div key={ch.title} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:24}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                    <div style={{color:C.text,fontWeight:700}}>{ch.title}</div>
+                    <div style={{color:C.muted,fontSize:12}}>{ch.sub}</div>
+                  </div>
+                  <Chart data={ch.data} color={ch.color}/>
+                  <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+                    {ch.labels.map(l=><div key={l} style={{color:C.muted,fontSize:10,textAlign:"center",flex:1}}>{l}</div>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Quick Actions */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12}}>
+              {[{l:"سحب الأرباح",icon:"💳",color:C.gold},{l:"دعوة لاعب",icon:"📨",color:C.green},
+                {l:"تقرير PDF",icon:"📄",color:C.blue},{l:"الدعم الفني",icon:"🎧",color:C.muted}
+              ].map(a=>(
+                <button key={a.l} style={{background:`${a.color}12`,border:`1px solid ${a.color}33`,
+                  borderRadius:12,padding:"16px 12px",cursor:"pointer",
+                  display:"flex",flexDirection:"column",alignItems:"center",gap:8,
+                  color:a.color,fontFamily:"'Cairo',sans-serif",fontWeight:700,fontSize:13,transition:"all .2s"}}>
+                  <span style={{fontSize:24}}>{a.icon}</span>{a.l}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* PLAYERS */}
+        {tab==="players"&&(
+          <div className="fade-in">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h2 style={{color:C.text,fontSize:20,fontWeight:800,margin:0}}>إدارة اللاعبين</h2>
+              <input placeholder="🔍 بحث عن لاعب..." style={{padding:"9px 16px",background:C.card,
+                border:`1px solid ${C.border}`,borderRadius:10,color:C.text,fontSize:13,outline:"none"}}/>
+            </div>
+            <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,overflow:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",minWidth:600}}>
+                <thead>
+                  <tr style={{background:"#111828",borderBottom:`1px solid ${C.border}`}}>
+                    {["اللاعب","المعرف","الحالة","الإيداع","عمولتي","التاريخ"].map(h=>(
+                      <th key={h} style={{padding:"14px 20px",color:C.muted,fontSize:12,fontWeight:700,
+                        textAlign:"right",letterSpacing:1}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {players.map((p,i)=>(
+                    <tr key={i} style={{borderBottom:`1px solid ${C.border}22`}}
+                      onMouseEnter={e=>e.currentTarget.style.background="#111828"}
+                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <td style={{padding:"16px 20px"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div style={{width:36,height:36,borderRadius:10,
+                            background:`linear-gradient(135deg,${C.gold}33,${C.blue}33)`,
+                            display:"flex",alignItems:"center",justifyContent:"center",
+                            color:C.goldL,fontWeight:800,fontSize:14}}>{p.name[0]}</div>
+                          <span style={{color:C.text,fontWeight:600,fontSize:14}}>{p.name}</span>
+                        </div>
+                      </td>
+                      <td style={{padding:"16px 20px",color:C.muted,fontSize:12,fontFamily:"'Space Mono',monospace"}}>{p.id}</td>
+                      <td style={{padding:"16px 20px"}}>
+                        <span style={{padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:700,
+                          background:p.status==="نشط"?`${C.green}22`:p.status==="جديد"?`${C.blue}22`:`${C.red}22`,
+                          color:p.status==="نشط"?C.green:p.status==="جديد"?C.blue:C.red}}>{p.status}</span>
+                      </td>
+                      <td style={{padding:"16px 20px",color:C.text,fontWeight:700}}>{p.dep}</td>
+                      <td style={{padding:"16px 20px",color:C.gold,fontWeight:700}}>{p.com}</td>
+                      <td style={{padding:"16px 20px",color:C.muted,fontSize:12}}>{p.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* COMMISSIONS */}
+        {tab==="commissions"&&(
+          <div className="fade-in">
+            <h2 style={{color:C.text,fontSize:20,fontWeight:800,marginBottom:20}}>العمولات والأرباح</h2>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:16,marginBottom:24}}>
+              {[{lv:"برونزي",rate:"5%",min:"0",color:"#cd7f32"},
+                {lv:"فضي",rate:"7%",min:"50,000",color:"#c0c0c0"},
+                {lv:"ذهبي ★",rate:"10%",min:"200,000",color:C.gold,active:true},
+                {lv:"ماسي",rate:"15%",min:"500,000",color:"#b9f2ff"}
+              ].map(l=>(
+                <div key={l.lv} style={{background:l.active?`${l.color}18`:C.card,
+                  border:`2px solid ${l.active?l.color:C.border}`,borderRadius:16,padding:20,textAlign:"center",
+                  boxShadow:l.active?`0 0 30px ${l.color}20`:"none"}}>
+                  <div style={{fontSize:28,marginBottom:8}}>{l.active?"👑":"🏆"}</div>
+                  <div style={{color:l.color,fontWeight:800,fontSize:16,marginBottom:4}}>{l.lv}</div>
+                  <div style={{color:C.text,fontSize:24,fontWeight:900,fontFamily:"'Playfair Display',serif"}}>{l.rate}</div>
+                  <div style={{color:C.muted,fontSize:11,marginTop:6}}>من {l.min} ر.س</div>
+                  {l.active&&<div style={{marginTop:10,background:`${l.color}33`,borderRadius:6,padding:"4px 8px",
+                    fontSize:11,color:l.color,fontWeight:700}}>مستواك الحالي</div>}
+                </div>
+              ))}
+            </div>
+            <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:28}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24,flexWrap:"wrap",gap:16}}>
+                <div>
+                  <div style={{color:C.muted,fontSize:13,marginBottom:6}}>الرصيد المتاح للسحب</div>
+                  <div style={{color:C.goldL,fontSize:36,fontWeight:900,fontFamily:"'Playfair Display',serif"}}>٤٣,٨٢٠ ر.س</div>
+                </div>
+                <button style={{padding:"14px 32px",background:`linear-gradient(135deg,${C.gold},${C.goldD})`,
+                  border:"none",borderRadius:12,color:"#000",fontWeight:800,fontSize:15,cursor:"pointer",
+                  boxShadow:`0 8px 24px rgba(201,168,76,.35)`}}>سحب الأرباح</button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16}}>
+                {[{l:"مسحوب هذا الشهر",v:"18,200 ر.س"},{l:"قيد المعالجة",v:"5,600 ر.س"},{l:"إجمالي الأرباح",v:"187,420 ر.س"}]
+                  .map(({l,v})=>(
+                  <div key={l} style={{background:"#060810",borderRadius:12,padding:16,textAlign:"center"}}>
+                    <div style={{color:C.muted,fontSize:11,marginBottom:6}}>{l}</div>
+                    <div style={{color:C.text,fontWeight:800,fontSize:18}}>{v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* REPORTS */}
+        {tab==="reports"&&(
+          <div className="fade-in">
+            <h2 style={{color:C.text,fontSize:20,fontWeight:800,marginBottom:20}}>التقارير والإحصائيات</h2>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:16}}>
+              {[{title:"تقرير الأرباح الشهري",desc:"ملخص كامل لعمولاتك وإيداعات اللاعبين",icon:"📈",date:"مايو 2026"},
+                {title:"تقرير اللاعبين",desc:"إحصائيات تفصيلية لنشاط جميع اللاعبين",icon:"👥",date:"مايو 2026"},
+                {title:"تقرير الإيداعات",desc:"حركة الإيداعات والسحوبات لهذا الربع",icon:"💹",date:"Q2 2026"},
+                {title:"تقرير الأداء السنوي",desc:"مقارنة أدائك بالعام الماضي",icon:"📊",date:"2026"}
+              ].map(r=>(
+                <div key={r.title} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:24}}>
+                  <div style={{display:"flex",gap:16,alignItems:"flex-start"}}>
+                    <div style={{width:48,height:48,borderRadius:12,background:`${C.gold}18`,
+                      display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{r.icon}</div>
+                    <div style={{flex:1}}>
+                      <div style={{color:C.text,fontWeight:700,fontSize:15,marginBottom:6}}>{r.title}</div>
+                      <div style={{color:C.muted,fontSize:12,marginBottom:14}}>{r.desc}</div>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <button style={{padding:"7px 16px",background:`${C.gold}22`,border:`1px solid ${C.gold}44`,
+                          borderRadius:8,color:C.gold,fontWeight:700,fontSize:12,cursor:"pointer"}}>📥 تحميل PDF</button>
+                        <span style={{color:C.muted,fontSize:11}}>{r.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* FOOTER */}
+      <div style={{background:C.card,borderTop:`1px solid ${C.border}`,padding:"12px 24px",
+        display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{color:C.muted,fontSize:11}}>© 2026 Texas4Win • جميع الحقوق محفوظة</div>
+        <div style={{color:C.muted,fontSize:11}}>رقم الوكيل: <span style={{color:C.gold}}>{user.id}</span></div>
+      </div>
+    </div>
+  );
+}
+
+/* ── App Root ── */
+function App(){
+  const [loggedIn,setLoggedIn]=useState(false);
+  const [userData,setUserData]=useState(null);
+  const [installPrompt,setInstallPrompt]=useState(null);
+
+  useEffect(()=>{
+    const handler=e=>{ e.preventDefault(); setInstallPrompt(e); };
+    window.addEventListener("beforeinstallprompt",handler);
+    return ()=>window.removeEventListener("beforeinstallprompt",handler);
+  },[]);
+
+  const handleInstall=async()=>{
+    if(!installPrompt)return;
+    installPrompt.prompt();
+    const r=await installPrompt.userChoice;
+    if(r.outcome==="accepted")setInstallPrompt(null);
+  };
+
+  if(!loggedIn) return <Login onLogin={u=>{setUserData(u);setLoggedIn(true);}}/>;
+  return <Dashboard user={userData} onLogout={()=>{setLoggedIn(false);setUserData(null);}}
+    installPrompt={installPrompt} onInstall={handleInstall}/>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

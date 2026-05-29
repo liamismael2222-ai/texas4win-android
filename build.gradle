@@ -1,0 +1,56 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.texas4win.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.texas4win.app"
+        // يدعم Android 5.0 فأعلى - يغطي 99%+ من الأجهزة
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+
+        // دعم العربية RTL
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // لإنتاج APK موقّع جاهز للرفع
+            // signingConfig signingConfigs.release
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    // ضغط APK للتوزيع
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES']
+        }
+    }
+}
+
+dependencies {
+    // AndroidX الأساسي
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    
+    // مكتبة السحب للتحديث
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    
+    // تصميم Material
+    implementation 'com.google.android.material:material:1.11.0'
+}
