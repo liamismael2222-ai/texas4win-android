@@ -24,8 +24,7 @@ jobs:
           mkdir -p app/src/main/res/mipmap-xhdpi
           mkdir -p app/src/main/res/mipmap-xxhdpi
           mkdir -p app/src/main/res/mipmap-xxxhdpi
-          mv MainActivity.java app/src/main/java/com/texas4win/app/ 2>/dev/null || true
-          mv index.html app/src/main/assets/ 2>/dev/null || true
+          cp MainActivity.java app/src/main/java/com/texas4win/app/
           mv AndroidManifest.xml app/src/main/ 2>/dev/null || true
           mv activity_main.xml app/src/main/res/layout/ 2>/dev/null || true
           mv strings.xml app/src/main/res/values/ 2>/dev/null || true
@@ -38,63 +37,15 @@ jobs:
           cp ic_launcher.xml app/src/main/res/mipmap-xhdpi/ 2>/dev/null || true
           cp ic_launcher.xml app/src/main/res/mipmap-xxhdpi/ 2>/dev/null || true
           cp ic_launcher.xml app/src/main/res/mipmap-xxxhdpi/ 2>/dev/null || true
+          sed -i 's|file:///android_asset/index.html|https://agents.texas4win.com/|g' app/src/main/java/com/texas4win/app/MainActivity.java
       - name: Write root build.gradle
-        run: |
-          cat > build.gradle << 'EOF'
-          plugins {
-              id 'com.android.application' version '8.2.0' apply false
-          }
-          EOF
+        run: printf 'plugins {\n    id "com.android.application" version "8.2.0" apply false\n}\n' > build.gradle
       - name: Write app build.gradle
         run: |
-          cat > app/build.gradle << 'EOF'
-          plugins {
-              id 'com.android.application'
-          }
-          android {
-              namespace 'com.texas4win.app'
-              compileSdk 34
-              defaultConfig {
-                  applicationId "com.texas4win.app"
-                  minSdk 26
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
-              }
-              buildTypes {
-                  debug { debuggable true }
-              }
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_1_8
-                  targetCompatibility JavaVersion.VERSION_1_8
-              }
-          }
-          dependencies {
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-              implementation 'com.google.android.material:material:1.11.0'
-          }
-          EOF
+          printf 'plugins {\n    id "com.android.application"\n}\nandroid {\n    namespace "com.texas4win.app"\n    compileSdk 34\n    defaultConfig {\n        applicationId "com.texas4win.app"\n        minSdk 26\n        targetSdk 34\n        versionCode 1\n        versionName "1.0"\n    }\n    buildTypes {\n        debug { debuggable true }\n    }\n    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_1_8\n        targetCompatibility JavaVersion.VERSION_1_8\n    }\n}\ndependencies {\n    implementation "androidx.appcompat:appcompat:1.6.1"\n    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"\n    implementation "com.google.android.material:material:1.11.0"\n}\n' > app/build.gradle
       - name: Write settings.gradle
         run: |
-          cat > settings.gradle << 'EOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.name = "Texas4Win"
-          include ':app'
-          EOF
+          printf 'pluginManagement {\n    repositories {\n        google()\n        mavenCentral()\n        gradlePluginPortal()\n    }\n}\ndependencyResolutionManagement {\n    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)\n    repositories {\n        google()\n        mavenCentral()\n    }\n}\nrootProject.name = "Texas4Win"\ninclude ":app"\n' > settings.gradle
       - name: Setup Gradle
         run: gradle wrapper --gradle-version=8.4 --distribution-type=bin
       - uses: android-actions/setup-android@v3
