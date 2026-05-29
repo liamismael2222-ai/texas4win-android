@@ -1,0 +1,107 @@
+name: Build APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Create project structure
+        run: |
+          mkdir -p app/src/main/java/com/texas4win/app
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/mipmap-hdpi
+          mkdir -p app/src/main/res/mipmap-mdpi
+          mkdir -p app/src/main/res/mipmap-xhdpi
+          mkdir -p app/src/main/res/mipmap-xxhdpi
+          mkdir -p app/src/main/res/mipmap-xxxhdpi
+          mv MainActivity.java app/src/main/java/com/texas4win/app/ 2>/dev/null || true
+          mv index.html app/src/main/assets/ 2>/dev/null || true
+          mv AndroidManifest.xml app/src/main/ 2>/dev/null || true
+          mv activity_main.xml app/src/main/res/layout/ 2>/dev/null || true
+          mv strings.xml app/src/main/res/values/ 2>/dev/null || true
+          mv themes.xml app/src/main/res/values/ 2>/dev/null || true
+          mv colors.xml app/src/main/res/values/ 2>/dev/null || true
+          mv splash_background.xml app/src/main/res/drawable/ 2>/dev/null || true
+          mv ic_launcher_foreground.xml app/src/main/res/drawable/ 2>/dev/null || true
+          cp ic_launcher.xml app/src/main/res/mipmap-hdpi/ 2>/dev/null || true
+          cp ic_launcher.xml app/src/main/res/mipmap-mdpi/ 2>/dev/null || true
+          cp ic_launcher.xml app/src/main/res/mipmap-xhdpi/ 2>/dev/null || true
+          cp ic_launcher.xml app/src/main/res/mipmap-xxhdpi/ 2>/dev/null || true
+          cp ic_launcher.xml app/src/main/res/mipmap-xxxhdpi/ 2>/dev/null || true
+      - name: Write root build.gradle
+        run: |
+          cat > build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application' version '8.2.0' apply false
+          }
+          EOF
+      - name: Write app build.gradle
+        run: |
+          cat > app/build.gradle << 'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.texas4win.app'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.texas4win.app"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+              buildTypes {
+                  debug { debuggable true }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
+              }
+          }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+              implementation 'com.google.android.material:material:1.11.0'
+          }
+          EOF
+      - name: Write settings.gradle
+        run: |
+          cat > settings.gradle << 'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "Texas4Win"
+          include ':app'
+          EOF
+      - name: Setup Gradle
+        run: gradle wrapper --gradle-version=8.4 --distribution-type=bin
+      - uses: android-actions/setup-android@v3
+      - run: yes | sdkmanager --licenses || true
+      - run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Texas4Win-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
