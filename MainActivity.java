@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         setupSwipeRefresh();
 
         // تحميل التطبيق من ملف الأصول المحلي
-        webView.loadUrl("file:///android_asset/index.html");
+        /https://agents.texas4win.com/
     }
 
     private void setupWebView() {
